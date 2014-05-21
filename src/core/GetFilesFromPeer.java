@@ -11,9 +11,16 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import model.Arquivo;
 import util.Funcoes;
 
@@ -29,12 +36,14 @@ public class GetFilesFromPeer extends Thread {
     private DatagramSocket socketUnicast;
     private ArrayList<Arquivo> arquivosDoTracker;
     int idProcesso;
+    private PrivateKey key;
 
-    public GetFilesFromPeer(String msg, int idProcesso, InetAddress address, int port, ArrayList<Arquivo> array) {
+    public GetFilesFromPeer(String msg, int idProcesso, InetAddress address, int port, ArrayList<Arquivo> array, PrivateKey key) {
         try {
             this.msg = msg;
             this.address = address;
             this.port = port;
+            this.key = key;
             this.idProcesso = idProcesso;
             this.arquivosDoTracker = array;
             this.socketUnicast = new DatagramSocket();
@@ -48,7 +57,7 @@ public class GetFilesFromPeer extends Thread {
     @Override
     public void run() {
         try {
-            byte[] buf = msg.getBytes();
+            byte[] buf = Funcoes.encrypt(key, msg.getBytes());
             DatagramPacket pack = new DatagramPacket(buf, buf.length, address, port);
             socketUnicast.send(pack);
             String fileName = "empty";
@@ -80,12 +89,12 @@ public class GetFilesFromPeer extends Thread {
             }
             socketUnicast.close();            
             System.out.println("Terminou UNICAST");
-            for(int i = 0; i < arquivosDoTracker.size(); i++){
-                System.out.print(arquivosDoTracker.get(i).getNome());
-                System.out.println(arquivosDoTracker.get(i).getProcessos().toString());
+            for (Arquivo arquivosDoTracker1 : arquivosDoTracker) {
+                System.out.print(arquivosDoTracker1.getNome());
+                System.out.println(arquivosDoTracker1.getProcessos().toString());
             }
             this.interrupt();
-        } catch (IOException ex) {
+        } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException ex) {
             Logger.getLogger(GetFilesFromPeer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

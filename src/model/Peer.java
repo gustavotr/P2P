@@ -58,5 +58,10 @@ public class Peer {
     public void setPort(int porta) {
         this.port = porta;
     }
+
+    public PublicKey getPublicteKey() {
+        return publicteKey;
+    } 
+    
     
 }

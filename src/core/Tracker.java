@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,22 +29,19 @@ public class Tracker extends Thread{
     private MulticastSocketP2P multicastSocket;
     private DatagramSocket socketUDP;
     private int idTracker;
-    private Processo processo;
     private TrackerHello trackerHello;
-
-    /**
-     * Numero da porta UDP do Tracker para receber requisicoes
-     */
     private int UDPPort;
+    private KeyPair keyPair;
     
     /**
      * Construtor do Tracker
-     * @param id recebe um int que e o id do processo que o gerou
+     * @param processo recebe o processo que o gerou
      */
     public Tracker(Processo processo) {
         try {            
-            this.processo = processo;
+            //this.processo = processo;
             idTracker = processo.getId();
+            keyPair = processo.getKeyPair();
             arquivosDoTracker = new ArrayList<>();
             multicastSocket = new MulticastSocketP2P();
             socketUDP  = new DatagramSocket();            
@@ -75,7 +73,7 @@ public class Tracker extends Thread{
                     int id = Integer.parseInt(resposta.substring(5,7));                    
                     if(port != UDPPort){
                         System.out.println("Tracker status: Receber arquivos");
-                        GetFilesFromPeer uni = new GetFilesFromPeer(Funcoes.GET_ARQUIVOS, id, add, port, arquivosDoTracker);
+                        GetFilesFromPeer uni = new GetFilesFromPeer(Funcoes.GET_ARQUIVOS, id, add, port, arquivosDoTracker, keyPair.getPrivate());
                     }
                 }else{
                     respostaEsperada = "Request: buscar("; 
@@ -84,7 +82,7 @@ public class Tracker extends Thread{
                         String busca = resposta.substring(16, resposta.lastIndexOf(')') );                     
                         if(port != UDPPort){
                             System.out.println("Tracker status: Processar busca");
-                            SendFilesFromTracker uni = new SendFilesFromTracker(busca, add, port, arquivosDoTracker);
+                            SendFilesFromTracker uni = new SendFilesFromTracker(busca, add, port, arquivosDoTracker, keyPair.getPrivate());
                         }
                     }else{
                         respostaEsperada = "Request: arquivo("; 
@@ -138,7 +136,7 @@ public class Tracker extends Thread{
             while (!multicastSocket.isClosed()) { 
                 try {
                     //System.out.println("\nTracker ativo!");
-                    multicastSocket.enviarMensagem(Funcoes.TRACKER_HELLO+idTracker+";Porta:"+UDPPort+";",processo.getPublicKey());
+                    multicastSocket.enviarMensagem(Funcoes.TRACKER_HELLO+idTracker+";Porta:"+UDPPort+";",keyPair.getPublic());
                     this.sleep(4000);
 //                    for(int i = 0; i < arquivosDoTracker.size(); i++){
 //                        System.out.println(arquivosDoTracker.get(i).getNome());

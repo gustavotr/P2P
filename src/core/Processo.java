@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PublicKey;
@@ -20,6 +23,8 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.swing.JFrame;
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
@@ -110,8 +115,8 @@ public class Processo implements Runnable {
         return rsa;
     }
     
-    public PublicKey getPublicKey(){
-        return rsa.getKeyPair().getPublic();
+    public KeyPair getKeyPair(){
+        return rsa.getKeyPair();
     }
     
     public int getId() {
@@ -185,12 +190,20 @@ public class Processo implements Runnable {
             array[0] = "empty";
             array[1] = "empty";
             while(go){
-                buf = new byte[1024];
+                buf = new byte[32];
                 pack = new DatagramPacket(buf, buf.length);
                 socket.receive(pack);                
                 String data = new String(pack.getData());
+                
+                // -------- resposta sem descriptografia
+                System.out.println(data);
+                // -------- resposta com descriptografia
+                data = new String(Funcoes.decrypt(tracker.getPublicteKey(), buf));
+                System.out.println(data);
+                
                 array = data.split(":");
-                fileName = array[1].substring(0,array[1].lastIndexOf(";"));                
+                fileName = array[1].substring(0,array[1].lastIndexOf(";"));
+                
                 if(!fileName.equals(statusFinal)){
                     busca.add(fileName);                        
                 }else{
@@ -203,7 +216,7 @@ public class Processo implements Runnable {
             socket.close();            
         } catch (SocketException ex) {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
+        } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException ex) {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -233,10 +246,17 @@ public class Processo implements Runnable {
             DatagramSocket socketUnicast = new DatagramSocket();
             DatagramPacket pack = new DatagramPacket(buf, buf.length, tracker.getAddress(), tracker.getPort());
             socketUnicast.send(pack);
-            buf = new byte[1024];
+            buf = new byte[32];
             pack = new DatagramPacket(buf, buf.length);
             socketUnicast.receive(pack);
             String resposta = new String(pack.getData());
+            
+            // -------- resposta sem descriptografia
+            System.out.println(resposta);
+            // -------- resposta com descriptografia
+            resposta = new String(Funcoes.decrypt(tracker.getPublicteKey(), buf));
+            System.out.println(resposta);
+            
             resposta = resposta.substring(0,resposta.indexOf(";"));
             String respostaEsperada = "Request: getArquivos";
             System.out.println("UNICAST DO TRACKER <- " + resposta);
@@ -257,9 +277,13 @@ public class Processo implements Runnable {
             socketUnicast.close();
         } catch (SocketException ex) {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
+        } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException ex) {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    public PublicKey getPublicKey() {
+        return rsa.getKeyPair().getPublic();
     }
     
     
