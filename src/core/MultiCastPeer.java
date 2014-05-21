@@ -127,7 +127,7 @@ public class MultiCastPeer extends Thread {
         
         peers = new ArrayList<>();
         
-        String peer = "Peer id:"+processo.getId()+";";
+        String peer = "Peer id:"+processo.getId()+";porta:"+processo.getSocketUnicast().getLocalPort()+";";
         multicastSocket.enviarMensagem(peer, processo.getPublicKey());
         
         while(peers.size() < peersConnected){
@@ -157,10 +157,21 @@ public class MultiCastPeer extends Thread {
                 
                 String respostaEsperada = "Peer id:";   
                 String data = resposta.substring(0,respostaEsperada.length());
-                if(data.equals(respostaEsperada)){                   
-                   int tempID = Integer.parseInt(resposta.substring(8,10));               
+                if(data.equals(respostaEsperada)){ 
+                    int tempID = 0;
+                    int porta = 0;
+                   String[] array = resposta.split(";");
+                   for(String str : array){
+                       String[] item = str.split(":");
+                       if(item[0].equals("Peer id")){
+                           tempID = Integer.parseInt(item[1]);
+                       }
+                       if(item[0].equals("porta")){
+                           porta = Integer.parseInt(item[1]);
+                       }
+                   }
                    if(!peersHasID(tempID)){
-                       Peer newPeer = new Peer(tempID, keyRecebida, pack.getAddress(),pack.getPort());
+                       Peer newPeer = new Peer(tempID, keyRecebida, pack.getAddress(),porta);
                        peers.add(newPeer);
                        multicastSocket.enviarMensagem(peer, processo.getPublicKey());
                        System.out.println("Novo peer: "+newPeer.getSettings());

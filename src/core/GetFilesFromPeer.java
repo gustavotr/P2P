@@ -57,9 +57,12 @@ public class GetFilesFromPeer extends Thread {
     @Override
     public void run() {
         try {
+            // pede arquivos para o peer
             byte[] buf = Funcoes.encrypt(key, msg.getBytes());
             DatagramPacket pack = new DatagramPacket(buf, buf.length, address, port);
             socketUnicast.send(pack);
+                      
+            //recebe arquivos do peer
             String fileName = "empty";
             String[] array = new String[2];
             array[0] = "empty";

@@ -14,7 +14,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -46,7 +45,9 @@ public class Processo implements Runnable {
     public boolean knowTracker;
     public boolean isReady;
     private JFrame jFrame;
+    private boolean inDownloadView;
     private JPanel telaInicial;
+    private DatagramSocket socketUnicast;
     private Vector<String> arquivosDoProcesso;
     private Vector<String> arquivosBuscados;
     private String folderPath;
@@ -54,11 +55,13 @@ public class Processo implements Runnable {
     private String stringBuscada;
     private boolean changePanel;
 
-    public Processo() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
+    public Processo() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, SocketException {
         Random rnd = new Random();
         id = 10 + rnd.nextInt(89);
         knowTracker = false; 
         isReady = false;
+        inDownloadView = false;
+        socketUnicast = new DatagramSocket();
         rsa = new RSA();
         buscou = false;
         changePanel = false;
@@ -67,10 +70,16 @@ public class Processo implements Runnable {
         initJFrame();        
         
         new MultiCastPeer(this);
+        new Cliente(this);
         new Thread(this).start();
         
     }
-    
+
+    public boolean isInDownloadView() {
+        return inDownloadView;
+    }
+
+        
     /**
      * Procura por todos os arquivos que estão na pasta do processo
      * e os adiciona ao Vector arquivosDoProcesso
@@ -135,6 +144,11 @@ public class Processo implements Runnable {
         //cliente = new Cliente(multi, this);
     } 
 
+    public String getFolderPath() {
+        return folderPath;
+    }
+    
+    
     @Override
     public void run() {
         while(true){
@@ -152,6 +166,7 @@ public class Processo implements Runnable {
                         jFrame.getContentPane().add(telaInicial);
                         jFrame.repaint();
                         changePanel = false;
+                        inDownloadView = true;
                     }
                 }
                 
@@ -180,9 +195,8 @@ public class Processo implements Runnable {
             String str = "Request: buscar("+stringBuscada+")";
             System.out.println(tracker.getAddress()+":"+tracker.getPort());
             byte[] buf = str.getBytes();
-            DatagramSocket socket = new DatagramSocket();
             DatagramPacket pack = new DatagramPacket(buf, buf.length, tracker.getAddress(), tracker.getPort());
-            socket.send(pack);
+            socketUnicast.send(pack);
             String statusFinal = Funcoes.END_OF_FILES;
             boolean go = true;
             String fileName = "empty";
@@ -192,7 +206,7 @@ public class Processo implements Runnable {
             while(go){
                 buf = new byte[32];
                 pack = new DatagramPacket(buf, buf.length);
-                socket.receive(pack);                
+                socketUnicast.receive(pack);                
                 String data = new String(pack.getData());
                 
                 // -------- resposta sem descriptografia
@@ -212,8 +226,7 @@ public class Processo implements Runnable {
             }
             arquivosBuscados = busca;
             buscou = true;
-            changePanel = true;
-            socket.close();            
+            changePanel = true;           
         } catch (SocketException ex) {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException ex) {
@@ -243,12 +256,12 @@ public class Processo implements Runnable {
         try {
             String str = "Peer "+id+" diz: oi tracker!";
             byte[] buf = str.getBytes();
-            DatagramSocket socketUnicast = new DatagramSocket();
+            DatagramSocket socket = new DatagramSocket();
             DatagramPacket pack = new DatagramPacket(buf, buf.length, tracker.getAddress(), tracker.getPort());
-            socketUnicast.send(pack);
+            socket.send(pack);
             buf = new byte[32];
             pack = new DatagramPacket(buf, buf.length);
-            socketUnicast.receive(pack);
+            socket.receive(pack);
             String resposta = new String(pack.getData());
             
             // -------- resposta sem descriptografia
@@ -267,14 +280,13 @@ public class Processo implements Runnable {
                     String data = "fileName:"+arquivos.get(i)+";";
                     buf = data.getBytes();
                     pack = new DatagramPacket(buf, buf.length, pack.getAddress(), pack.getPort());
-                    socketUnicast.send(pack);
+                    socket.send(pack);
                 }
             }
             String data = "status:"+Funcoes.END_OF_FILES+";";
             buf = data.getBytes();
             pack = new DatagramPacket(buf, buf.length, pack.getAddress(), pack.getPort());
             socketUnicast.send(pack);
-            socketUnicast.close();
         } catch (SocketException ex) {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException ex) {
@@ -285,8 +297,15 @@ public class Processo implements Runnable {
     public PublicKey getPublicKey() {
         return rsa.getKeyPair().getPublic();
     }
-    
-    
+
+    public DatagramSocket getSocketUnicast() {
+        return socketUnicast;
+    }
+        
+    public Peer getTracker() {
+        return tracker;
+    }
+          
     
     
 }

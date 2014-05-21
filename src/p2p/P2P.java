@@ -7,6 +7,7 @@
 package p2p;
 
 import core.Processo;
+import java.net.SocketException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import javax.crypto.NoSuchPaddingException;
@@ -20,7 +21,7 @@ public class P2P {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
+    public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, SocketException {
         new Processo();
     }
     

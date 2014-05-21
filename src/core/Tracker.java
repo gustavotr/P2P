@@ -10,10 +10,16 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import model.Arquivo;
 import model.MulticastSocketP2P;
 import model.Peer;
@@ -73,6 +79,7 @@ public class Tracker extends Thread{
                     int id = Integer.parseInt(resposta.substring(5,7));                    
                     if(port != UDPPort){
                         System.out.println("Tracker status: Receber arquivos");
+                        System.out.println("\tFrom: "+add+":"+port);
                         GetFilesFromPeer uni = new GetFilesFromPeer(Funcoes.GET_ARQUIVOS, id, add, port, arquivosDoTracker, keyPair.getPrivate());
                     }
                 }else{
@@ -92,7 +99,7 @@ public class Tracker extends Thread{
                             if(port != UDPPort){
                                 Peer peer = getFileLocation(busca);
                                 String location = new String(peer.getAddress().getHostAddress() + ":" + peer.getPort());
-                                buf = location.getBytes();
+                                buf = Funcoes.encrypt(keyPair.getPrivate(), location.getBytes());
                                 DatagramSocket socket = new DatagramSocket();
                                 pack = new DatagramPacket(buf, buf.length, add, port);
                                 socket.send(pack);
@@ -100,29 +107,25 @@ public class Tracker extends Thread{
                         }
                     }
                 }
-            } catch (IOException ex) {
+            } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException ex) {
                 Logger.getLogger(Tracker.class.getName()).log(Level.SEVERE, null, ex);
             }
        }
         
     }
 
-    private Peer getFileLocation(String busca) {
-        Peer peer = null;
-        for(int i = 0; i < arquivosDoTracker.size(); i++){   
-            Arquivo temp = arquivosDoTracker.get(i);
+    private Peer getFileLocation(String busca) {        
+        for (Arquivo temp : arquivosDoTracker) {
             String nome = temp.getNome();
-            nome = nome.substring(0, 4+nome.lastIndexOf(".") );
-            if(nome.equals(busca)){
-                for(int j = 0; j < MultiCastPeer.getPeers().size(); j++){
-                    if(MultiCastPeer.getPeers().get(j).getId() == arquivosDoTracker.get(i).getProcessos().get(0)){
-                        peer = MultiCastPeer.getPeers().get(j);
+            if (nome.equals(busca)) {
+                for(Peer peer : MultiCastPeer.getPeers()){
+                    if(peer.getId() == temp.getProcessos().get(0)){
                         return peer;
                     }
                 }
             }
         }
-        return peer;
+        return null;
     }
  
      public class TrackerHello extends Thread{
