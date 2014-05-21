@@ -61,7 +61,7 @@ public class Processo implements Runnable {
         jFrame.setVisible(true);        
         jFrame.setDefaultCloseOperation(EXIT_ON_CLOSE);
         jFrame.setTitle("Processo P2P ID: " + id);               
-        telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight());
+        telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight(),GUITelaInicial.AGUARDANDO);
         jFrame.getContentPane().add(telaInicial);
         jFrame.repaint();
     }
@@ -85,6 +85,8 @@ public class Processo implements Runnable {
             myTracker = new Tracker(this);
         }
         
+        System.out.println(tracker.getSettings());
+        
         //cliente = new Cliente(multi, this);
     } 
 
@@ -93,7 +95,7 @@ public class Processo implements Runnable {
         while(true){
             if(knowTracker){   
                 if(!isReady){
-                    telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight()).initComponents();
+                    telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight(),GUITelaInicial.CONECTADO);
                     jFrame.getContentPane().removeAll();
                     jFrame.getContentPane().add(telaInicial);
                     jFrame.repaint();
@@ -103,7 +105,7 @@ public class Processo implements Runnable {
                 }
                 
             }else{  //no tracker
-                telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight());
+                telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight(),GUITelaInicial.AGUARDANDO);
                 jFrame.getContentPane().removeAll();
                 jFrame.getContentPane().add(telaInicial);
                 jFrame.repaint();

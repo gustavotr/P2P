@@ -47,7 +47,7 @@ public class MultiCastPeer extends Thread {
     public void run() {        
         while (true) {
             if (!processo.knowTracker) {
-                System.out.println(eleicao());
+                eleicao();
             }else{  
                 try {                                        
                     byte[] buf = new byte[1024];
@@ -57,14 +57,13 @@ public class MultiCastPeer extends Thread {
                     byte[] messgage = Arrays.copyOfRange(buf, 0, Funcoes.getKeyIndex() - 1);
                     String resposta = new String(messgage);
                     System.out.println("MULTiCAST <- " + resposta);
-                    System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );
-                    this.sleep(1000);
+                    System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );                    
                 } catch(SocketTimeoutException ex){
                     System.out.println("Tracker caiu!");                    
                     processo.knowTracker = false;                    
                 }catch (SocketException ex) {
                     Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException | InterruptedException ex) {
+                } catch (IOException ex) {
                     Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -103,7 +102,7 @@ public class MultiCastPeer extends Thread {
             
             try {
                 multicastSocket.receive(pack);
-            }catch (SocketTimeoutException ex){                
+            }catch (SocketTimeoutException ex){ //Após timeout faz a eleicao com os peers atualis                
                 return eleicao(peers.size());
             }catch (IOException ex) {
                 Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
@@ -134,31 +133,24 @@ public class MultiCastPeer extends Thread {
                 }
                 
                 
+                //Testa se a mensagem recebida e de um tracker
+                //caso o processo tenha sido adicionado depois de uma eleicao ja feita
+
+                respostaEsperada = Funcoes.to1024String("eu sou o tracker! ID:");
+                resposta = new String(pack.getData());
+
+                if(resposta.substring(0,20).equals(respostaEsperada.substring(0, 20))){ //seta o tracker ja existente e termina a eleicao
+                    int tempID = Integer.parseInt(resposta.substring(21,23));
+                    Peer tempPeer = new Peer(tempID, keyRecebida, pack.getAddress(), pack.getPort());
+                    processo.setTheTracker(tempPeer);
+                    return "Tracker("+tempPeer.getSettings()+")"; 
+                }
                 
-            } catch (NoSuchAlgorithmException ex) {
+                
+                
+            } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeySpecException ex) {
                 Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (NoSuchProviderException ex) {
-                Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (InvalidKeySpecException ex) {
-                Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-            
-            
-            
-            //Testa se a mensagem recebida e de um tracker
-            //caso o processo tenha sido adicionado depois de uma eleicao ja feita
-            
-            //respostaEsperada = Funcoes.to1024String("eu sou o tracker! ID:");
-            //resposta = new String(pack.getData());
-            
-//            if(resposta.substring(0,20).equals(respostaEsperada.substring(0, 20))){
-//                int tempID = Integer.parseInt(resposta.substring(21,23));
-//                Peer tempPeer = new Peer(tempID, pack.getAddress(), pack.getPort());
-//                processo.setTheTracker(tempPeer);
-//                return "Tracker("+tempPeer.getSettings()+")";
-//            }
-            
+            }          
             
         }
         

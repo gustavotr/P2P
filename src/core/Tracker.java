@@ -11,6 +11,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Arquivo;
@@ -29,11 +30,12 @@ public class Tracker extends Thread{
     private DatagramSocket socketUDP;
     private int idTracker;
     private Processo processo;
+    private TrackerHello trackerHello;
 
     /**
      * Numero da porta UDP do Tracker para receber requisicoes
      */
-    public static final int UDPPort = 6066;
+    public int UDPPort;
     
     /**
      * Construtor do Tracker
@@ -45,9 +47,10 @@ public class Tracker extends Thread{
             idTracker = processo.getId();
             arquivosDoTracker = new ArrayList<>();
             multicastSocket = new MulticastSocketP2P();
-            socketUDP  = new DatagramSocket(UDPPort);
-            TrackerHello trackerHello = new TrackerHello();
-            this.start();
+            socketUDP  = new DatagramSocket();            
+            UDPPort = socketUDP.getLocalPort();            
+            trackerHello = new TrackerHello();
+            //this.start();
         } catch (IOException ex) {
             Logger.getLogger(Tracker.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -75,21 +78,21 @@ public class Tracker extends Thread{
                     buf = saudacao.getBytes();
                     pack = new DatagramPacket(buf, buf.length, pack.getAddress(), pack.getPort());
                     socketUDP.send(pack); 
-                    if(port != Tracker.UDPPort){
+                    if(port != UDPPort){
 //                        GetAquivosDoPeer uni = new GetAquivosDoPeer("Request: getArquivos;", id, add, port, arquivosDoTracker);
                     }
                 }
                 respostaEsperada = Funcoes.to1024String("Request: buscar(");                
                 if(resposta.substring(0,15).equals(respostaEsperada.substring(0,15))){
                     String busca = resposta.substring(16, resposta.lastIndexOf(')') );                     
-                    if(port != Tracker.UDPPort){
+                    if(port != UDPPort){
 //                        SendAquivosDoTracker uni = new SendAquivosDoTracker(busca, add, port, arquivosDoTracker);
                     }
                 }
                 respostaEsperada = Funcoes.to1024String("Request: arquivo(");                
                 if(resposta.substring(0,16).equals(respostaEsperada.substring(0,16))){
                     String busca = resposta.substring(17, resposta.lastIndexOf(')') ); 
-                    if(port != Tracker.UDPPort){
+                    if(port != UDPPort){
                         Peer peer = getFileLocation(busca);
                         String location = new String(peer.getAddress().getHostAddress() + ":" + peer.getPort());
                         buf = location.getBytes();
@@ -134,8 +137,8 @@ public class Tracker extends Thread{
             while (!multicastSocket.isClosed()) { 
                 try {
                     //System.out.println("\nTracker ativo!");
-                    multicastSocket.enviarMensagem("eu sou o tracker! ID:"+idTracker+";",processo.getPublicKey());
-                    this.sleep(5000);
+                    multicastSocket.enviarMensagem("Eu sou o tracker! ID:"+idTracker+";Porta:"+UDPPort+";",processo.getPublicKey());
+                    this.sleep(4000);
 //                    for(int i = 0; i < arquivosDoTracker.size(); i++){
 //                        System.out.println(arquivosDoTracker.get(i).getNome());
 //                    }
@@ -143,8 +146,6 @@ public class Tracker extends Thread{
                     Logger.getLogger(Tracker.class.getName()).log(Level.SEVERE, null, ex);
                 }
            }
-           Thread.currentThread().interrupt();
-
         }
         
     }
