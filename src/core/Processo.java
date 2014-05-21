@@ -8,7 +8,13 @@ package core;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.crypto.NoSuchPaddingException;
 import javax.swing.JFrame;
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
 import javax.swing.JPanel;
@@ -19,21 +25,29 @@ import view.GUITelaInicial;
  *
  * @author a1097075
  */
-public class Processo {
+public class Processo implements Runnable {
     
     private int id;
-    private Peer traker;
+    private Peer tracker;
     private RSA rsa;
-    private boolean knowTracker;
+    private Tracker myTracker;
+    public boolean knowTracker;
+    public boolean isReady;
     private JFrame jFrame;
+    private JPanel telaInicial;
 
-    public Processo() {
+    public Processo() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
         Random rnd = new Random();
         id = 10 + rnd.nextInt(89);
-        knowTracker = false;        
-        
-                
+        knowTracker = false; 
+        isReady = false;
+        rsa = new RSA();
         initJFrame();
+        
+        
+        new MultiCastPeer(this);
+        new Thread(this).start();
+        
     }
     /**
      * inicializa a tela principal
@@ -47,9 +61,59 @@ public class Processo {
         jFrame.setVisible(true);        
         jFrame.setDefaultCloseOperation(EXIT_ON_CLOSE);
         jFrame.setTitle("Processo P2P ID: " + id);               
-        JPanel telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight());
-        jFrame.add(telaInicial);
-        jFrame.invalidate();
+        telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight());
+        jFrame.getContentPane().add(telaInicial);
+        jFrame.repaint();
+    }
+
+    public RSA getRsa() {
+        return rsa;
+    }
+    
+    public PublicKey getPublicKey(){
+        return rsa.getKeyPair().getPublic();
+    }
+    
+    public int getId() {
+        return id;
+    }
+    
+    public void setTheTracker(Peer peer){
+        this.tracker = peer;        
+        knowTracker = true;
+        if(tracker.getId() == id){
+            myTracker = new Tracker(this);
+        }
+        
+        //cliente = new Cliente(multi, this);
+    } 
+
+    @Override
+    public void run() {
+        while(true){
+            if(knowTracker){   
+                if(!isReady){
+                    telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight()).initComponents();
+                    jFrame.getContentPane().removeAll();
+                    jFrame.getContentPane().add(telaInicial);
+                    jFrame.repaint();
+                    isReady = true;
+                }else{ //not ready
+                    
+                }
+                
+            }else{  //no tracker
+                telaInicial = new GUITelaInicial(jFrame.getWidth(), jFrame.getHeight());
+                jFrame.getContentPane().removeAll();
+                jFrame.getContentPane().add(telaInicial);
+                jFrame.repaint();
+            }  
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
     
     

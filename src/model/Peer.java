@@ -7,8 +7,6 @@
 package model;
 
 import java.net.InetAddress;
-import java.security.KeyPair;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 
 /**
@@ -20,9 +18,8 @@ public class Peer {
     private InetAddress address;
     private int id;
     private int port;
-    private PrivateKey privateKey;
     private PublicKey publicteKey;
-
+    
     /**
      * Construtora do Peer
      * @param id
@@ -30,14 +27,13 @@ public class Peer {
      * @param address
      * @param port 
      */
-    public Peer(int id, KeyPair key, InetAddress address, int port) {
+     public Peer(int id, PublicKey key, InetAddress address, int port) {
         this.address = address;
         this.port = port;
         this.id = id;
-        this.privateKey = key.getPrivate();
-        this.publicteKey = key.getPublic();
+        this.publicteKey = key;
     }
-
+    
     public InetAddress getAddress() {
         return address;
     }

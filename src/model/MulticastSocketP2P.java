@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.security.Key;
+import util.Funcoes;
 
 /**
  *
@@ -62,9 +64,14 @@ public class MulticastSocketP2P extends MulticastSocket{
      * @param msg
      *
      */
-    public void enviarMensagem(String msg) {  
-        byte[] byteMsg = msg.getBytes();
-        DatagramPacket msgOut = new DatagramPacket(byteMsg, byteMsg.length, group, MULTICAST_PORT);
+    public void enviarMensagem(String msg, Key key) {
+        byte[] data = new byte[1024];
+        byte[] byteKey = key.getEncoded();
+        byte[] byteMsg = msg.getBytes();        
+        
+        System.arraycopy(byteMsg, 0, data, 0, byteMsg.length);
+        System.arraycopy(byteKey, 0, data, Funcoes.getKeyIndex(), byteKey.length);
+        DatagramPacket msgOut = new DatagramPacket(data, data.length, group, MULTICAST_PORT);
         try {            
             this.send(msgOut);    
         } catch (IOException e) {

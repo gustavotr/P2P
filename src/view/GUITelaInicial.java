@@ -30,30 +30,32 @@ public class GUITelaInicial extends JPanel{
         this.setVisible(true);
         
         label = new JLabel("Aguardando a conexao dos peers");
-        label.setBounds(width/2, height/2, 200, 20);
+        label.setBounds(width/2 - 100, height/2 + 50, 200, 20);
         this.add(label);
     }
 
     /**
      * Inicialização dos componentes da tela de início
      */
-    public void initComponents() {
+    public JPanel initComponents() {
         
         label.setText("Peers conectados");
                 
         busca = new JTextField();
-        busca.setBounds(width/2, height/2, 200, 20);
+        busca.setBounds(width/2 - 200, height/2 - 50, 300, 20);
         this.add(busca);
         
         buttonBuscar = new JButton("Buscar");        
-        buttonBuscar.setBounds(width/2 + 210, height/2, 100, 20);
+        buttonBuscar.setBounds(width/2 + 110, height/2 - 50, 100, 20);
         //buttonBuscar.addActionListener(listener);
         this.add(buttonBuscar);
 
         labelErro = new JLabel();
         labelErro.setBounds(width/2, height*3/2, 200, 20);
         labelErro.setFont(new Font(null, Font.PLAIN, 10));
-        this.add(labelErro);        
+        this.add(labelErro); 
+        
+        return this;
     }
 
     public JButton getButtonStart() {

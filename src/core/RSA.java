@@ -12,13 +12,13 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
  *
@@ -30,7 +30,7 @@ public class RSA {
     private final Cipher cipher;
 
     public RSA() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
-        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        Security.addProvider(new BouncyCastleProvider());
         
         cipher = Cipher.getInstance("RSA/None/NoPadding", "BC");
         SecureRandom random = new SecureRandom();
@@ -40,6 +40,10 @@ public class RSA {
         keyPair = generator.generateKeyPair();
         
         
+    }
+
+    public KeyPair getKeyPair() {
+        return keyPair;
     }
     
     public byte [] encrypt(PrivateKey key, byte [] data ) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException{
