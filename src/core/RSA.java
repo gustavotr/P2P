@@ -7,6 +7,7 @@
 package core;
 
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -27,37 +28,20 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 public class RSA {
         
     private final KeyPair keyPair;
-    private final Cipher cipher;
 
     public RSA() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
         Security.addProvider(new BouncyCastleProvider());
         
-        cipher = Cipher.getInstance("RSA/None/NoPadding", "BC");
+        Cipher cipher = Cipher.getInstance("RSA/None/NoPadding", "BC");
         SecureRandom random = new SecureRandom();
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", "BC");
         
         generator.initialize(256, random);
-        keyPair = generator.generateKeyPair();
-        
+        keyPair = generator.generateKeyPair();        
         
     }
 
     public KeyPair getKeyPair() {
         return keyPair;
     }
-    
-    public byte [] encrypt(PrivateKey key, byte [] data ) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException{
-        SecureRandom random = new SecureRandom();
-        cipher.init(Cipher.ENCRYPT_MODE, key, random);
-        byte[] cipherData = cipher.doFinal(data);
-        return cipherData;
-    }
-    
-    public byte [] decrypt(PrivateKey key, byte [] data ) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException{
-        SecureRandom random = new SecureRandom();
-        cipher.init(Cipher.DECRYPT_MODE, key, random);
-        byte[] cipherData = cipher.doFinal(data);
-        return cipherData;
-    }   
-    
 }

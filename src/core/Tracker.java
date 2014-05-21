@@ -11,7 +11,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Arquivo;
@@ -35,7 +34,7 @@ public class Tracker extends Thread{
     /**
      * Numero da porta UDP do Tracker para receber requisicoes
      */
-    public int UDPPort;
+    private int UDPPort;
     
     /**
      * Construtor do Tracker
@@ -50,15 +49,15 @@ public class Tracker extends Thread{
             socketUDP  = new DatagramSocket();            
             UDPPort = socketUDP.getLocalPort();            
             trackerHello = new TrackerHello();
-            //this.start();
+            this.start();
         } catch (IOException ex) {
             Logger.getLogger(Tracker.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }       
-    
+    }     
+        
     @Override
     /**
-     * Tracker fica escutando o Unicast 
+     * Tracker fica escutando o Unicast por requisicoes dos Peers
      */
     public void run() {        
         while (true) { 
@@ -69,36 +68,35 @@ public class Tracker extends Thread{
                 String resposta = new String(pack.getData());
                 InetAddress add = pack.getAddress();
                 int port = pack.getPort();
-               // System.out.println("UNICAST -> " + resposta);  
-               // System.out.println( new String("\tFrom: " + add.getHostAddress() + ":" + port) );
+                System.out.println( new String("\tFrom: " + add.getHostAddress() + ":" + port) );
                 String respostaEsperada = Funcoes.to1024String("Peer XX diz: oi tracker!");
                 if(resposta.substring(8).equals(respostaEsperada.substring(8))){
-                    int id = Integer.parseInt(resposta.substring(5,7));
-                    String saudacao = "oi peer " + id;
-                    buf = saudacao.getBytes();
-                    pack = new DatagramPacket(buf, buf.length, pack.getAddress(), pack.getPort());
-                    socketUDP.send(pack); 
+                    int id = Integer.parseInt(resposta.substring(5,7));                    
                     if(port != UDPPort){
-//                        GetAquivosDoPeer uni = new GetAquivosDoPeer("Request: getArquivos;", id, add, port, arquivosDoTracker);
+                        System.out.println("Tracker status: Receber arquivos");
+                        GetAquivosDoPeer uni = new GetAquivosDoPeer("Request: getArquivos;", id, add, port, arquivosDoTracker);
                     }
-                }
-                respostaEsperada = Funcoes.to1024String("Request: buscar(");                
-                if(resposta.substring(0,15).equals(respostaEsperada.substring(0,15))){
-                    String busca = resposta.substring(16, resposta.lastIndexOf(')') );                     
-                    if(port != UDPPort){
-//                        SendAquivosDoTracker uni = new SendAquivosDoTracker(busca, add, port, arquivosDoTracker);
-                    }
-                }
-                respostaEsperada = Funcoes.to1024String("Request: arquivo(");                
-                if(resposta.substring(0,16).equals(respostaEsperada.substring(0,16))){
-                    String busca = resposta.substring(17, resposta.lastIndexOf(')') ); 
-                    if(port != UDPPort){
-                        Peer peer = getFileLocation(busca);
-                        String location = new String(peer.getAddress().getHostAddress() + ":" + peer.getPort());
-                        buf = location.getBytes();
-                        DatagramSocket socket = new DatagramSocket();
-                        pack = new DatagramPacket(buf, buf.length, add, port);
-                        socket.send(pack);
+                }else{
+                    respostaEsperada = Funcoes.to1024String("Request: buscar(");                
+                    if(resposta.substring(0,15).equals(respostaEsperada.substring(0,15))){
+                        String busca = resposta.substring(16, resposta.lastIndexOf(')') );                     
+                        if(port != UDPPort){
+                            System.out.println("Tracker status: Processar busca");
+                            SendAquivosDoTracker uni = new SendAquivosDoTracker(busca, add, port, arquivosDoTracker);
+                        }
+                    }else{
+                        respostaEsperada = Funcoes.to1024String("Request: arquivo(");                
+                        if(resposta.substring(0,16).equals(respostaEsperada.substring(0,16))){
+                            String busca = resposta.substring(17, resposta.lastIndexOf(')') ); 
+                            if(port != UDPPort){
+                                Peer peer = getFileLocation(busca);
+                                String location = new String(peer.getAddress().getHostAddress() + ":" + peer.getPort());
+                                buf = location.getBytes();
+                                DatagramSocket socket = new DatagramSocket();
+                                pack = new DatagramPacket(buf, buf.length, add, port);
+                                socket.send(pack);
+                            }
+                        }
                     }
                 }
             } catch (IOException ex) {

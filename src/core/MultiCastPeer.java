@@ -54,16 +54,49 @@ public class MultiCastPeer extends Thread {
                     DatagramPacket pack = new DatagramPacket(buf, buf.length);
                     multicastSocket.setSoTimeout(5000);
                     multicastSocket.receive(pack);
+                    
                     byte[] messgage = Arrays.copyOfRange(buf, 0, Funcoes.getKeyIndex() - 1);
+                    byte[] key = Arrays.copyOfRange(buf, Funcoes.getKeyIndex(), buf.length);
+                    
                     String resposta = new String(messgage);
-                    System.out.println("MULTiCAST <- " + resposta);
-                    System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );                    
+                    String respostaEsperada = Funcoes.to1024String("Peer id:");
+                    
+                      System.out.println("MULTiCAST DO PEER <- " + resposta);
+//                    System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );
+                
+                    if(resposta.substring(0,7).equals(respostaEsperada.substring(0,7))){ 
+                        //System.out.println("MULTiCAST DO PEER <- " + resposta);
+                       
+                       int tempID = Integer.parseInt(resposta.substring(8,10));               
+                       if(!peersHasID(tempID)){
+                           PublicKey keyRecebida = KeyFactory.getInstance("RSA", "BC").generatePublic(new X509EncodedKeySpec(key));
+                           Peer newPeer = new Peer(tempID, keyRecebida, pack.getAddress(),pack.getPort());
+                           peers.add(newPeer);
+                           String peer = "Peer id:"+processo.getId()+";";
+                           multicastSocket.enviarMensagem(peer, processo.getPublicKey());
+                           System.out.println("Novo peer: "+newPeer.getSettings());
+                       }
+                    }
+                    
+                    respostaEsperada = Funcoes.to1024String("Eu sou o tracker! ID:");
+                    if(resposta.substring(0,20).equals(respostaEsperada.substring(0, 20))){ //atualiza o tracker atual
+                        String str = resposta.substring(30);
+                        int id = Integer.parseInt(resposta.substring(21,23));
+                        PublicKey keyRecebida = KeyFactory.getInstance("RSA", "BC").generatePublic(new X509EncodedKeySpec(key));
+                        int porta = Integer.parseInt(str.substring(0, str.indexOf(";")));
+                        Peer peer = new Peer(id, keyRecebida, pack.getAddress(), porta);
+                        processo.updateTracker(peer);
+                    }
+                    
+                    
                 } catch(SocketTimeoutException ex){
                     System.out.println("Tracker caiu!");                    
                     processo.knowTracker = false;                    
                 }catch (SocketException ex) {
                     Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
+                } catch (IOException | InvalidKeySpecException ex) {
+                    Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (NoSuchAlgorithmException | NoSuchProviderException ex) {
                     Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -136,7 +169,7 @@ public class MultiCastPeer extends Thread {
                 //Testa se a mensagem recebida e de um tracker
                 //caso o processo tenha sido adicionado depois de uma eleicao ja feita
 
-                respostaEsperada = Funcoes.to1024String("eu sou o tracker! ID:");
+                respostaEsperada = Funcoes.to1024String("Eu sou o tracker! ID:");
                 resposta = new String(pack.getData());
 
                 if(resposta.substring(0,20).equals(respostaEsperada.substring(0, 20))){ //seta o tracker ja existente e termina a eleicao

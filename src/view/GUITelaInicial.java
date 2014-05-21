@@ -1,10 +1,15 @@
 package view;
 
+import core.Processo;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 public class GUITelaInicial extends JPanel{
 
@@ -18,8 +23,10 @@ public class GUITelaInicial extends JPanel{
     public static final int AGUARDANDO = 1;
     public static final int CONECTADO = 2;
     public static final int PRONTO = 3;
+    private Processo processo;
 
-    public GUITelaInicial(int width, int height, int status) {        
+    public GUITelaInicial(Processo processo, int width, int height, int status) {        
+        this.processo = processo;
         this.width = width;
         this.height = height; 
         this.setSize(width, height);
@@ -30,7 +37,7 @@ public class GUITelaInicial extends JPanel{
                      break;
             case CONECTADO:  initComponents();
                      break;
-            case PRONTO:
+            case PRONTO: mostrarBusca();
                     break;
             default:
                     break;
@@ -56,7 +63,14 @@ public class GUITelaInicial extends JPanel{
         
         buttonBuscar = new JButton("Buscar");        
         buttonBuscar.setBounds(width/2 + 110, height/2 - 50, 100, 20);
-        //buttonBuscar.addActionListener(listener);
+        buttonBuscar.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String buscar = busca.getText();
+                processo.realizarBusca(buscar);
+            }
+        });
         this.add(buttonBuscar);
 
         labelErro = new JLabel();
@@ -76,5 +90,17 @@ public class GUITelaInicial extends JPanel{
     public String getBusca(){
         return busca.getText();
     }   
+
+    private void mostrarBusca() {
+        JLabel buscaRealizada = new JLabel(processo.getStringBuscada());
+        buscaRealizada.setBounds(10, 20, getWidth() - 20, 40);
+        buscaRealizada.setHorizontalAlignment(SwingConstants.CENTER);
+        buscaRealizada.setFont(new Font(null, Font.BOLD, 18));
+        this.add(buscaRealizada);
+        
+        JList<String> result = new JList<>(processo.getArquivosBuscados());
+        result.setBounds(20, 100, getWidth() - 50, getHeight() - 150);
+        this.add(result);
+    }
 
 }
