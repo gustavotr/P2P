@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Arquivo;
+import util.Funcoes;
 
 
 
@@ -22,14 +23,14 @@ import model.Arquivo;
  *
  * @author Gustavo
  */
-class SendAquivosDoTracker implements Runnable{
+class SendFilesFromTracker implements Runnable{
     private int port;
     private InetAddress address;
     private ArrayList<Arquivo> arquivosDoTracker;
     private String busca;
     private DatagramSocket socketUnicast;
 
-    public SendAquivosDoTracker(String busca, InetAddress add, int port, ArrayList<Arquivo> array) {
+    public SendFilesFromTracker(String busca, InetAddress add, int port, ArrayList<Arquivo> array) {
         try {
             this.address = add;
             this.port = port;
@@ -38,7 +39,7 @@ class SendAquivosDoTracker implements Runnable{
             this.socketUnicast = new DatagramSocket();
             new Thread(this).start();
         } catch (SocketException ex) {
-            Logger.getLogger(SendAquivosDoTracker.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SendFilesFromTracker.class.getName()).log(Level.SEVERE, null, ex);
         }
         
     }
@@ -50,7 +51,7 @@ class SendAquivosDoTracker implements Runnable{
                 System.out.println("arquivosDoTrackerVazio");
                 Thread.sleep(500);
             } catch (InterruptedException ex) {
-                Logger.getLogger(SendAquivosDoTracker.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(SendFilesFromTracker.class.getName()).log(Level.SEVERE, null, ex);
             }
         }        
         try {              
@@ -59,19 +60,21 @@ class SendAquivosDoTracker implements Runnable{
             for(int i = 0; i < arquivosDoTracker.size(); i++){                
                 String fileName = arquivosDoTracker.get(i).getNome();                
                 if(fileName.substring(0,busca.length()).equals(busca)){
-                    buf = arquivosDoTracker.get(i).getNome().getBytes();
+                    String data = "fileName:"+arquivosDoTracker.get(i).getNome()+";";
+                    buf = data.getBytes();
                     pack = new DatagramPacket(buf, buf.length, address, port);
                     socketUnicast.send(pack);
                 }
             }
-            buf = "fim dos arquivos".getBytes();
+            String data = "status:"+Funcoes.END_OF_FILES+";";
+            buf = data.getBytes();
             pack = new DatagramPacket(buf, buf.length, address, port);
             socketUnicast.send(pack);
             socketUnicast.close();
             Thread.currentThread().interrupt();
-            //System.out.println("Terminou UNICAST");
+            System.out.println("Tracker terminou busca");
         } catch (IOException ex) {
-            Logger.getLogger(GetAquivosDoPeer.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GetFilesFromPeer.class.getName()).log(Level.SEVERE, null, ex);
         }
         
     }

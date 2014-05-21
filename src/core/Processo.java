@@ -47,6 +47,7 @@ public class Processo implements Runnable {
     private String folderPath;
     private boolean buscou;
     private String stringBuscada;
+    private boolean changePanel;
 
     public Processo() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
         Random rnd = new Random();
@@ -55,6 +56,7 @@ public class Processo implements Runnable {
         isReady = false;
         rsa = new RSA();
         buscou = false;
+        changePanel = false;
         folderPath = "src/arquivos/processo"+(rnd.nextInt(4)+1);  
         setArquivos();
         initJFrame();        
@@ -74,7 +76,7 @@ public class Processo implements Runnable {
         File[] listOfFiles = folder.listFiles();
         
             for(int i = 0; i < listOfFiles.length; i++){
-                arquivosDoProcesso.add(folderPath + "/" + listOfFiles[i].getName());
+                arquivosDoProcesso.add(listOfFiles[i].getName());
             }
     }
 
@@ -132,23 +134,30 @@ public class Processo implements Runnable {
     public void run() {
         while(true){
             if(knowTracker && isReady){
-                if(!buscou){ //nao fez uma busca ainda
+                if(!buscou && changePanel){ //nao fez uma busca ainda
                     telaInicial = new GUITelaInicial(this, jFrame.getWidth(), jFrame.getHeight(),GUITelaInicial.CONECTADO);
                     jFrame.getContentPane().removeAll();
                     jFrame.getContentPane().add(telaInicial);
                     jFrame.repaint();
+                    changePanel = false;
                 }else{ //buscou
-                    telaInicial = new GUITelaInicial(this, jFrame.getWidth(), jFrame.getHeight(),GUITelaInicial.PRONTO);
-                    jFrame.getContentPane().removeAll();
-                    jFrame.getContentPane().add(telaInicial);
-                    jFrame.repaint();
+                    if(changePanel){
+                        telaInicial = new GUITelaInicial(this, jFrame.getWidth(), jFrame.getHeight(),GUITelaInicial.PRONTO);
+                        jFrame.getContentPane().removeAll();
+                        jFrame.getContentPane().add(telaInicial);
+                        jFrame.repaint();
+                        changePanel = false;
+                    }
                 }
                 
             }else{  //no tracker
-                telaInicial = new GUITelaInicial(this, jFrame.getWidth(), jFrame.getHeight(),GUITelaInicial.AGUARDANDO);
-                jFrame.getContentPane().removeAll();
-                jFrame.getContentPane().add(telaInicial);
-                jFrame.repaint();
+                if(changePanel){
+                    telaInicial = new GUITelaInicial(this, jFrame.getWidth(), jFrame.getHeight(),GUITelaInicial.AGUARDANDO);
+                    jFrame.getContentPane().removeAll();
+                    jFrame.getContentPane().add(telaInicial);
+                    jFrame.repaint();
+                    changePanel = false;
+                }
             }  
             try {
                 Thread.sleep(500);
@@ -169,22 +178,28 @@ public class Processo implements Runnable {
             DatagramSocket socket = new DatagramSocket();
             DatagramPacket pack = new DatagramPacket(buf, buf.length, tracker.getAddress(), tracker.getPort());
             socket.send(pack);
-            String statusDoPedido = "empty";
-            String statusFinal = Funcoes.to1024String("fim dos arquivos");
-            while(!statusDoPedido.equals(statusFinal)){
+            String statusFinal = Funcoes.END_OF_FILES;
+            boolean go = true;
+            String fileName = "empty";
+            String[] array = new String[2];
+            array[0] = "empty";
+            array[1] = "empty";
+            while(go){
                 buf = new byte[1024];
                 pack = new DatagramPacket(buf, buf.length);
-                socket.receive(pack);
-                //System.out.println("Recebeu resposta da busca");
-                statusDoPedido = new String(pack.getData());
-                //System.out.println(statusDoPedido);
-                if(!statusDoPedido.equals(statusFinal)){
-                    //System.out.println("Novo Arquivo ------------------");
-                    busca.add(statusDoPedido);                        
+                socket.receive(pack);                
+                String data = new String(pack.getData());
+                array = data.split(":");
+                fileName = array[1].substring(0,array[1].lastIndexOf(";"));                
+                if(!fileName.equals(statusFinal)){
+                    busca.add(fileName);                        
+                }else{
+                    go = false;
                 }
             }
             arquivosBuscados = busca;
             buscou = true;
+            changePanel = true;
             socket.close();            
         } catch (SocketException ex) {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
@@ -192,18 +207,22 @@ public class Processo implements Runnable {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
+    /**
+     * Se o tracker ja e conhecido, ele e atualizado
+     * caso contrario seta um novo tracker
+     * @param peer 
+     */
     public void updateTracker(Peer peer) {
         if(knowTracker){
             if(tracker.getPort() != peer.getPort()){
                 tracker.setPort(peer.getPort());
                 enviarArquivosParaTracker();
+                changePanel = true;
             }
-            isReady = true;
+            isReady = true;            
         }else{
             setTheTracker(peer);
-            enviarArquivosParaTracker();  
-            isReady = true;
         }
     }
 
@@ -218,18 +237,21 @@ public class Processo implements Runnable {
             pack = new DatagramPacket(buf, buf.length);
             socketUnicast.receive(pack);
             String resposta = new String(pack.getData());
-            String respostaEsperada = Funcoes.to1024String("Request: getArquivos;");
+            resposta = resposta.substring(0,resposta.indexOf(";"));
+            String respostaEsperada = "Request: getArquivos";
             System.out.println("UNICAST DO TRACKER <- " + resposta);
             System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );
             if(resposta.equals(respostaEsperada)){
                 Vector<String> arquivos = arquivosDoProcesso;
                 for(int i = 0; i < arquivos.size(); i++){
-                    buf = arquivos.get(i).getBytes();
+                    String data = "fileName:"+arquivos.get(i)+";";
+                    buf = data.getBytes();
                     pack = new DatagramPacket(buf, buf.length, pack.getAddress(), pack.getPort());
                     socketUnicast.send(pack);
                 }
             }
-            buf = "fim dos arquivos".getBytes();
+            String data = "status:"+Funcoes.END_OF_FILES+";";
+            buf = data.getBytes();
             pack = new DatagramPacket(buf, buf.length, pack.getAddress(), pack.getPort());
             socketUnicast.send(pack);
             socketUnicast.close();

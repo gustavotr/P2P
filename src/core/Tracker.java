@@ -69,24 +69,27 @@ public class Tracker extends Thread{
                 InetAddress add = pack.getAddress();
                 int port = pack.getPort();
                 System.out.println( new String("\tFrom: " + add.getHostAddress() + ":" + port) );
-                String respostaEsperada = Funcoes.to1024String("Peer XX diz: oi tracker!");
-                if(resposta.substring(8).equals(respostaEsperada.substring(8))){
+                String respostaEsperada = "diz: oi tracker!";
+                String data = resposta.substring(8,8+respostaEsperada.length());
+                if(data.equals(respostaEsperada)){
                     int id = Integer.parseInt(resposta.substring(5,7));                    
                     if(port != UDPPort){
                         System.out.println("Tracker status: Receber arquivos");
-                        GetAquivosDoPeer uni = new GetAquivosDoPeer("Request: getArquivos;", id, add, port, arquivosDoTracker);
+                        GetFilesFromPeer uni = new GetFilesFromPeer(Funcoes.GET_ARQUIVOS, id, add, port, arquivosDoTracker);
                     }
                 }else{
-                    respostaEsperada = Funcoes.to1024String("Request: buscar(");                
-                    if(resposta.substring(0,15).equals(respostaEsperada.substring(0,15))){
+                    respostaEsperada = "Request: buscar("; 
+                    data = resposta.substring(0,respostaEsperada.length());
+                    if(data.equals(respostaEsperada)){
                         String busca = resposta.substring(16, resposta.lastIndexOf(')') );                     
                         if(port != UDPPort){
                             System.out.println("Tracker status: Processar busca");
-                            SendAquivosDoTracker uni = new SendAquivosDoTracker(busca, add, port, arquivosDoTracker);
+                            SendFilesFromTracker uni = new SendFilesFromTracker(busca, add, port, arquivosDoTracker);
                         }
                     }else{
-                        respostaEsperada = Funcoes.to1024String("Request: arquivo(");                
-                        if(resposta.substring(0,16).equals(respostaEsperada.substring(0,16))){
+                        respostaEsperada = "Request: arquivo("; 
+                        data = resposta.substring(0,respostaEsperada.length());
+                        if(data.equals(respostaEsperada)){
                             String busca = resposta.substring(17, resposta.lastIndexOf(')') ); 
                             if(port != UDPPort){
                                 Peer peer = getFileLocation(busca);
@@ -135,7 +138,7 @@ public class Tracker extends Thread{
             while (!multicastSocket.isClosed()) { 
                 try {
                     //System.out.println("\nTracker ativo!");
-                    multicastSocket.enviarMensagem("Eu sou o tracker! ID:"+idTracker+";Porta:"+UDPPort+";",processo.getPublicKey());
+                    multicastSocket.enviarMensagem(Funcoes.TRACKER_HELLO+idTracker+";Porta:"+UDPPort+";",processo.getPublicKey());
                     this.sleep(4000);
 //                    for(int i = 0; i < arquivosDoTracker.size(); i++){
 //                        System.out.println(arquivosDoTracker.get(i).getNome());

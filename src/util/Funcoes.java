@@ -24,20 +24,10 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
  */
 public class Funcoes {
     
-     /**
-     * Converte uma String em uma String que ocupa 1024 bytes de um byte array
-     *
-     * @param str recebe uma String como parâmetro.
-     * 
-     * @return retorna a nova String
-     */
-    public static final String to1024String(String str) {
-        byte[] buf = new byte[1024];
-        byte[] temp = str.getBytes();
-        System.arraycopy(temp, 0, buf, 0, temp.length);
-        return new String(buf);        
-    }
-    
+    public static final String GET_ARQUIVOS = "Request: getArquivos;";
+    public static final String TRACKER_HELLO = "Eu sou o tracker! ID:";
+    public static final String END_OF_FILES = "Fim dos arquivos";
+           
     /**
      * Retorna o index de onde a chave comeca a ser gravada no byte array
      * @return index

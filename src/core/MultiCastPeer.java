@@ -59,12 +59,13 @@ public class MultiCastPeer extends Thread {
                     byte[] key = Arrays.copyOfRange(buf, Funcoes.getKeyIndex(), buf.length);
                     
                     String resposta = new String(messgage);
-                    String respostaEsperada = Funcoes.to1024String("Peer id:");
+                    String respostaEsperada = "Peer id:";
                     
-                      System.out.println("MULTiCAST DO PEER <- " + resposta);
-//                    System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );
-                
-                    if(resposta.substring(0,7).equals(respostaEsperada.substring(0,7))){ 
+                    System.out.println("MULTiCAST DO PEER <- " + resposta);
+//                  System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );
+                      
+                    String data = resposta.substring(0,respostaEsperada.length());
+                    if(data.equals(respostaEsperada)){ 
                         //System.out.println("MULTiCAST DO PEER <- " + resposta);
                        
                        int tempID = Integer.parseInt(resposta.substring(8,10));               
@@ -78,8 +79,9 @@ public class MultiCastPeer extends Thread {
                        }
                     }
                     
-                    respostaEsperada = Funcoes.to1024String("Eu sou o tracker! ID:");
-                    if(resposta.substring(0,20).equals(respostaEsperada.substring(0, 20))){ //atualiza o tracker atual
+                    respostaEsperada = Funcoes.TRACKER_HELLO;
+                    data = resposta.substring(0,respostaEsperada.length());
+                    if(data.equals(respostaEsperada)){ //atualiza o tracker atual
                         String str = resposta.substring(30);
                         int id = Integer.parseInt(resposta.substring(21,23));
                         PublicKey keyRecebida = KeyFactory.getInstance("RSA", "BC").generatePublic(new X509EncodedKeySpec(key));
@@ -153,9 +155,9 @@ public class MultiCastPeer extends Thread {
                 //System.out.println("PrivateKey processo: " + Arrays.toString(processo.getPublicKey().getEncoded()));
                 
                 
-                String respostaEsperada = Funcoes.to1024String("Peer id:");
-                
-                if(resposta.substring(0,7).equals(respostaEsperada.substring(0,7))){                   
+                String respostaEsperada = "Peer id:";   
+                String data = resposta.substring(0,respostaEsperada.length());
+                if(data.equals(respostaEsperada)){                   
                    int tempID = Integer.parseInt(resposta.substring(8,10));               
                    if(!peersHasID(tempID)){
                        Peer newPeer = new Peer(tempID, keyRecebida, pack.getAddress(),pack.getPort());
@@ -169,13 +171,13 @@ public class MultiCastPeer extends Thread {
                 //Testa se a mensagem recebida e de um tracker
                 //caso o processo tenha sido adicionado depois de uma eleicao ja feita
 
-                respostaEsperada = Funcoes.to1024String("Eu sou o tracker! ID:");
+                respostaEsperada = Funcoes.TRACKER_HELLO;
                 resposta = new String(pack.getData());
-
-                if(resposta.substring(0,20).equals(respostaEsperada.substring(0, 20))){ //seta o tracker ja existente e termina a eleicao
+                data = resposta.substring(0,respostaEsperada.length()); 
+                if(data.equals(respostaEsperada)){ //seta o tracker ja existente e termina a eleicao
                     int tempID = Integer.parseInt(resposta.substring(21,23));
                     Peer tempPeer = new Peer(tempID, keyRecebida, pack.getAddress(), pack.getPort());
-                    processo.setTheTracker(tempPeer);
+                    processo.updateTracker(tempPeer);
                     return "Tracker("+tempPeer.getSettings()+")"; 
                 }
                 

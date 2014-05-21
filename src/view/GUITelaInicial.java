@@ -48,7 +48,8 @@ public class GUITelaInicial extends JPanel{
     private void inicializando(){
     
         label = new JLabel("Aguardando a conexao dos peers");
-        label.setBounds(width/2 - 100, height/2 + 50, 200, 20);
+        label.setBounds(20, height/2 + 50, width - 20, 40);
+        label.setHorizontalAlignment(SwingConstants.CENTER);        
         this.add(label);
     }
 
@@ -92,7 +93,9 @@ public class GUITelaInicial extends JPanel{
     }   
 
     private void mostrarBusca() {
-        JLabel buscaRealizada = new JLabel(processo.getStringBuscada());
+        String str = processo.getStringBuscada();
+        if(str.equals("")){ str = "Todos os arquivos"; }
+        JLabel buscaRealizada = new JLabel(str);
         buscaRealizada.setBounds(10, 20, getWidth() - 20, 40);
         buscaRealizada.setHorizontalAlignment(SwingConstants.CENTER);
         buscaRealizada.setFont(new Font(null, Font.BOLD, 18));

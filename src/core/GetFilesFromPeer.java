@@ -21,7 +21,7 @@ import util.Funcoes;
  *
  * @author Gustavo
  */
-public class GetAquivosDoPeer extends Thread {
+public class GetFilesFromPeer extends Thread {
     
     private String msg;
     private InetAddress address;
@@ -30,7 +30,7 @@ public class GetAquivosDoPeer extends Thread {
     private ArrayList<Arquivo> arquivosDoTracker;
     int idProcesso;
 
-    public GetAquivosDoPeer(String msg, int idProcesso, InetAddress address, int port, ArrayList<Arquivo> array) {
+    public GetFilesFromPeer(String msg, int idProcesso, InetAddress address, int port, ArrayList<Arquivo> array) {
         try {
             this.msg = msg;
             this.address = address;
@@ -40,7 +40,7 @@ public class GetAquivosDoPeer extends Thread {
             this.socketUnicast = new DatagramSocket();
             this.start();
         } catch (SocketException ex) {
-            Logger.getLogger(GetAquivosDoPeer.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GetFilesFromPeer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -51,32 +51,42 @@ public class GetAquivosDoPeer extends Thread {
             byte[] buf = msg.getBytes();
             DatagramPacket pack = new DatagramPacket(buf, buf.length, address, port);
             socketUnicast.send(pack);
-            String statusDoPedido = "empty";
-            String statusFinal = Funcoes.to1024String("fim dos arquivos");
-            while(!statusDoPedido.equals(statusFinal)){
+            String fileName = "empty";
+            String[] array = new String[2];
+            array[0] = "empty";
+            array[1] = "empty";
+            String statusFinal = Funcoes.END_OF_FILES;
+            boolean go = true;
+            while(go){
                 buf = new byte[1024];
                 pack = new DatagramPacket(buf, buf.length);
                 socketUnicast.receive(pack);
-                statusDoPedido = new String(pack.getData());
-                int indexDoArquivo = hasArquivo(statusDoPedido);
-                if(indexDoArquivo >= 0){
-                    if(!hasProcesso(idProcesso,indexDoArquivo)){
-                        arquivosDoTracker.get(indexDoArquivo).addProcesso(idProcesso);
-                    }
+                String data = new String(pack.getData());
+                array = data.split(":");
+                fileName = array[1].substring(0,array[1].lastIndexOf(";"));
+                if(fileName.equals(statusFinal)){
+                    go = false;
                 }else{
-                    arquivosDoTracker.add(new Arquivo(statusDoPedido, idProcesso));
+                    int indexDoArquivo = hasArquivo(fileName);
+                    if(indexDoArquivo >= 0){
+                        if(!hasProcesso(idProcesso,indexDoArquivo)){
+                            arquivosDoTracker.get(indexDoArquivo).addProcesso(idProcesso);
+                        }
+                    }else{
+                        arquivosDoTracker.add(new Arquivo(fileName, idProcesso));
+                    }
                 }
                 
             }
             socketUnicast.close();            
             System.out.println("Terminou UNICAST");
-//            for(int i = 0; i < arquivosDoTracker.size(); i++){
-//                System.out.print(arquivosDoTracker.get(i).getNome());
-//                System.out.println(arquivosDoTracker.get(i).getProcessos().toString());
-//            }
+            for(int i = 0; i < arquivosDoTracker.size(); i++){
+                System.out.print(arquivosDoTracker.get(i).getNome());
+                System.out.println(arquivosDoTracker.get(i).getProcessos().toString());
+            }
             this.interrupt();
         } catch (IOException ex) {
-            Logger.getLogger(GetAquivosDoPeer.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GetFilesFromPeer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
@@ -88,7 +98,7 @@ public class GetAquivosDoPeer extends Thread {
      */
     public int hasArquivo(String nome){
         for(int i = 0; i < arquivosDoTracker.size(); i++){
-            String temp = Funcoes.to1024String(arquivosDoTracker.get(i).getNome());
+            String temp = arquivosDoTracker.get(i).getNome();
             if(temp.equals(nome)){
                 return i;
             }
