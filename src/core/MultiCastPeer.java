@@ -95,7 +95,6 @@ public class MultiCastPeer extends Thread {
                     System.out.println("Tracker caiu!");                    
                     processo.knowTracker = false;
                     processo.changePanel = true;
-                    eleicao();
                 }catch (SocketException ex) {
                     Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (IOException | InvalidKeySpecException ex) {
@@ -112,7 +111,8 @@ public class MultiCastPeer extends Thread {
     }
     
     public String eleicao(){
-        return eleicao(4);
+        peers = new ArrayList<>();
+        return eleicao(4, peers);
     }
 
     public static ArrayList<Peer> getPeers() {
@@ -125,10 +125,10 @@ public class MultiCastPeer extends Thread {
      * e faz uma eleicao para saber quem sera o tracker
      * @return uma string com os dados do tracker eleito
      */
-    public String eleicao(int peersConnected){
+    public String eleicao(int peersConnected, ArrayList<Peer> arrayList){
         
-        peers = new ArrayList<>();
-        
+        peers = arrayList;
+                        
         String peer = "Peer id:"+processo.getId()+";porta:"+processo.getSocketUnicast().getLocalPort()+";";
         multicastSocket.enviarMensagem(peer, processo.getPublicKey());
         
@@ -140,7 +140,7 @@ public class MultiCastPeer extends Thread {
             try {
                 multicastSocket.receive(pack);
             }catch (SocketTimeoutException ex){ //Após timeout faz a eleicao com os peers atualis                
-                return eleicao(peers.size());
+                return eleicao(peers.size(), peers);
             }catch (IOException ex) {
                 Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -205,12 +205,10 @@ public class MultiCastPeer extends Thread {
         //System.out.println("Peers adicionados");
 
         Peer peerEleito = peers.get(0);
-        int idProcessoEleito = peerEleito.getId(); 
 
-        for (int i = 1; i < this.peers.size(); i++) {
-            if (idProcessoEleito < peers.get(i).getId()) {
-                peerEleito = peers.get(i);
-                idProcessoEleito = peerEleito.getId();               
+        for (Peer tempPeer : this.peers) {
+            if (peerEleito.getId() < tempPeer.getId()) {
+                peerEleito = tempPeer;              
             }
         }
 

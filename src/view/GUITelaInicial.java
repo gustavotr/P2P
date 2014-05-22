@@ -1,6 +1,7 @@
 package view;
 
 import core.Processo;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,7 +26,9 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -126,8 +129,8 @@ public class GUITelaInicial extends JPanel{
         myPath.setBounds(10, 0, getWidth() - 10, 15);
         this.add(myPath);
         
-        result = new JList<>(processo.getArquivosBuscados());
-        result.setBounds(20, 100, getWidth() - 50, getHeight() - 150);
+        result = new JList<>(processo.getArquivosBuscados());  
+        result.setPreferredSize(new Dimension(800,600));
         result.addListSelectionListener(new ListSelectionListener() {
 
             @Override
@@ -180,7 +183,13 @@ public class GUITelaInicial extends JPanel{
                 }
             }
         });
-        this.add(result);
+        
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBounds(width/4, height/4, width/2, height/2);
+        this.add(scrollPane);
+        
+        scrollPane.setViewportView(result);
     }
 
 }

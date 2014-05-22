@@ -50,6 +50,7 @@ public class Processo implements Runnable {
     private Vector<String> arquivosDoProcesso;
     private Vector<String> arquivosBuscados;
     private String folderPath;
+    private boolean enviouArquivos;
     private boolean buscou;
     private String stringBuscada;
     protected boolean changePanel;
@@ -62,7 +63,8 @@ public class Processo implements Runnable {
         socketUnicast = new DatagramSocket(6000+id);
         rsa = new RSA();
         buscou = false;
-        tracker = new Peer(0, null, null, 0);
+        enviouArquivos = false;
+        tracker = new Peer(id, null, null, 0);
         changePanel = false;
         folderPath = "src/arquivos/processo"+(rnd.nextInt(4)+1);  
         setArquivos();
@@ -128,14 +130,13 @@ public class Processo implements Runnable {
     }
     
     public void setTheTracker(Peer peer){
-        if(id == tracker.getId()){
-            myTracker = new Tracker(this);
+        if(id == peer.getId()){
+            myTracker = new Tracker(this);  
+            this.tracker = new Peer(id, myTracker.getPublicKey(), myTracker.getAddress(), myTracker.getUDPPort());
         }else{
-            this.tracker = peer;        
-        }
-        knowTracker = true;
-        
-        
+            this.tracker = peer;                    
+        }        
+        knowTracker = true;        
         System.out.println("Tracker: "+tracker.getSettings());
     } 
 
@@ -237,11 +238,9 @@ public class Processo implements Runnable {
      */
     public void updateTracker(Peer peer) {
         if(knowTracker){
-            if(tracker.getPort() != peer.getPort()){
-                tracker.setPort(peer.getPort());
-                enviarArquivosParaTracker();
-                changePanel = true;
-            }
+            tracker = peer;
+            enviarArquivosParaTracker();
+            changePanel = true;
             isReady = true;            
         }else{
             setTheTracker(peer);

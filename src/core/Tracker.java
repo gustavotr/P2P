@@ -10,10 +10,12 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,7 +52,7 @@ public class Tracker extends Thread{
             keyPair = processo.getKeyPair();
             arquivosDoTracker = new ArrayList<>();
             multicastSocket = new MulticastSocketP2P();
-            socketUDP  = new DatagramSocket();            
+            socketUDP  = new DatagramSocket();
             UDPPort = socketUDP.getLocalPort();            
             trackerHello = new TrackerHello();
             this.start();
@@ -112,7 +114,24 @@ public class Tracker extends Thread{
        }
         
     }
+    
+    public PublicKey getPublicKey(){
+        return keyPair.getPublic();
+    }
+    
+    public InetAddress getAddress(){
+        try {
+            return InetAddress.getLocalHost();
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Tracker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
 
+    public int getUDPPort() {
+        return UDPPort;
+    }
+    
     private Peer getFileLocation(String busca) {        
         for (Arquivo temp : arquivosDoTracker) {
             String nome = temp.getNome();
