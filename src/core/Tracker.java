@@ -72,7 +72,6 @@ public class Tracker extends Thread{
                 String resposta = new String(pack.getData());
                 InetAddress add = pack.getAddress();
                 int port = pack.getPort();
-                System.out.println( new String("\tFrom: " + add.getHostAddress() + ":" + port) );
                 String respostaEsperada = "diz: oi tracker!";
                 String data = resposta.substring(8,8+respostaEsperada.length());
                 if(data.equals(respostaEsperada)){
@@ -93,6 +92,7 @@ public class Tracker extends Thread{
                         }
                     }else{
                         respostaEsperada = "Request: arquivo("; 
+                        System.out.println("Tracker receberu requisicao de arquivo");
                         data = resposta.substring(0,respostaEsperada.length());
                         if(data.equals(respostaEsperada)){
                             String busca = resposta.substring(17, resposta.lastIndexOf(')') ); 
@@ -100,9 +100,8 @@ public class Tracker extends Thread{
                                 Peer peer = getFileLocation(busca);
                                 String location = new String(peer.getAddress().getHostAddress() + ":" + peer.getPort());
                                 buf = Funcoes.encrypt(keyPair.getPrivate(), location.getBytes());
-                                DatagramSocket socket = new DatagramSocket();
                                 pack = new DatagramPacket(buf, buf.length, add, port);
-                                socket.send(pack);
+                                socketUDP.send(pack);
                             }
                         }
                     }

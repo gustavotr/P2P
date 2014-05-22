@@ -73,7 +73,7 @@ public class MultiCastPeer extends Thread {
                            PublicKey keyRecebida = KeyFactory.getInstance("RSA", "BC").generatePublic(new X509EncodedKeySpec(key));
                            Peer newPeer = new Peer(tempID, keyRecebida, pack.getAddress(),pack.getPort());
                            peers.add(newPeer);
-                           String peer = "Peer id:"+processo.getId()+";";
+                           String peer = "Peer id:"+processo.getId()+";porta:"+processo.getSocketUnicast().getLocalPort()+";";
                            multicastSocket.enviarMensagem(peer, processo.getPublicKey());
                            System.out.println("Novo peer: "+newPeer.getSettings());
                        }
@@ -93,7 +93,9 @@ public class MultiCastPeer extends Thread {
                     
                 } catch(SocketTimeoutException ex){
                     System.out.println("Tracker caiu!");                    
-                    processo.knowTracker = false;                    
+                    processo.knowTracker = false;
+                    processo.changePanel = true;
+                    eleicao();
                 }catch (SocketException ex) {
                     Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (IOException | InvalidKeySpecException ex) {

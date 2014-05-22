@@ -45,7 +45,6 @@ public class Processo implements Runnable {
     public boolean knowTracker;
     public boolean isReady;
     private JFrame jFrame;
-    private boolean inDownloadView;
     private JPanel telaInicial;
     private DatagramSocket socketUnicast;
     private Vector<String> arquivosDoProcesso;
@@ -53,17 +52,17 @@ public class Processo implements Runnable {
     private String folderPath;
     private boolean buscou;
     private String stringBuscada;
-    private boolean changePanel;
+    protected boolean changePanel;
 
     public Processo() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, SocketException {
         Random rnd = new Random();
         id = 10 + rnd.nextInt(89);
         knowTracker = false; 
         isReady = false;
-        inDownloadView = false;
-        socketUnicast = new DatagramSocket();
+        socketUnicast = new DatagramSocket(6000+id);
         rsa = new RSA();
         buscou = false;
+        tracker = new Peer(0, null, null, 0);
         changePanel = false;
         folderPath = "src/arquivos/processo"+(rnd.nextInt(4)+1);  
         setArquivos();
@@ -73,10 +72,6 @@ public class Processo implements Runnable {
         new Cliente(this);
         new Thread(this).start();
         
-    }
-
-    public boolean isInDownloadView() {
-        return inDownloadView;
     }
 
         
@@ -133,15 +128,15 @@ public class Processo implements Runnable {
     }
     
     public void setTheTracker(Peer peer){
-        this.tracker = peer;        
-        knowTracker = true;
-        if(tracker.getId() == id){
+        if(id == tracker.getId()){
             myTracker = new Tracker(this);
+        }else{
+            this.tracker = peer;        
         }
+        knowTracker = true;
         
-        System.out.println(tracker.getSettings());
         
-        //cliente = new Cliente(multi, this);
+        System.out.println("Tracker: "+tracker.getSettings());
     } 
 
     public String getFolderPath() {
@@ -166,7 +161,6 @@ public class Processo implements Runnable {
                         jFrame.getContentPane().add(telaInicial);
                         jFrame.repaint();
                         changePanel = false;
-                        inDownloadView = true;
                     }
                 }
                 
@@ -196,7 +190,8 @@ public class Processo implements Runnable {
             System.out.println(tracker.getAddress()+":"+tracker.getPort());
             byte[] buf = str.getBytes();
             DatagramPacket pack = new DatagramPacket(buf, buf.length, tracker.getAddress(), tracker.getPort());
-            socketUnicast.send(pack);
+            DatagramSocket socket = new DatagramSocket();
+            socket.send(pack);
             String statusFinal = Funcoes.END_OF_FILES;
             boolean go = true;
             String fileName = "empty";
@@ -206,7 +201,7 @@ public class Processo implements Runnable {
             while(go){
                 buf = new byte[32];
                 pack = new DatagramPacket(buf, buf.length);
-                socketUnicast.receive(pack);                
+                socket.receive(pack);                
                 String data = new String(pack.getData());
                 
                 // -------- resposta sem descriptografia
@@ -226,7 +221,8 @@ public class Processo implements Runnable {
             }
             arquivosBuscados = busca;
             buscou = true;
-            changePanel = true;           
+            changePanel = true;     
+            socket.close();
         } catch (SocketException ex) {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException ex) {
@@ -286,7 +282,8 @@ public class Processo implements Runnable {
             String data = "status:"+Funcoes.END_OF_FILES+";";
             buf = data.getBytes();
             pack = new DatagramPacket(buf, buf.length, pack.getAddress(), pack.getPort());
-            socketUnicast.send(pack);
+            socket.send(pack);
+            socket.close();
         } catch (SocketException ex) {
             Logger.getLogger(Processo.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException ex) {
