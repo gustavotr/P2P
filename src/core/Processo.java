@@ -240,7 +240,9 @@ public class Processo implements Runnable {
         if(knowTracker){
             tracker = peer;
             enviarArquivosParaTracker();
-            changePanel = true;
+            if(!isReady){
+                changePanel = true;
+            }
             isReady = true;            
         }else{
             setTheTracker(peer);
