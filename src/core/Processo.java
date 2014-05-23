@@ -206,10 +206,10 @@ public class Processo implements Runnable {
                 String data = new String(pack.getData());
                 
                 // -------- resposta sem descriptografia
-                System.out.println(data);
+                //System.out.println(data);
                 // -------- resposta com descriptografia
                 data = new String(Funcoes.decrypt(tracker.getPublicteKey(), buf));
-                System.out.println(data);
+                //System.out.println(data);
                 
                 array = data.split(":");
                 fileName = array[1].substring(0,array[1].lastIndexOf(";"));
@@ -262,15 +262,15 @@ public class Processo implements Runnable {
             String resposta = new String(pack.getData());
             
             // -------- resposta sem descriptografia
-            System.out.println(resposta);
+            //System.out.println(resposta);
             // -------- resposta com descriptografia
             resposta = new String(Funcoes.decrypt(tracker.getPublicteKey(), buf));
-            System.out.println(resposta);
+            //System.out.println(resposta);
             
             resposta = resposta.substring(0,resposta.indexOf(";"));
             String respostaEsperada = "Request: getArquivos";
-            System.out.println("UNICAST DO TRACKER <- " + resposta);
-            System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );
+            //System.out.println("UNICAST DO TRACKER <- " + resposta);
+            //System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );
             if(resposta.equals(respostaEsperada)){
                 Vector<String> arquivos = arquivosDoProcesso;
                 for(int i = 0; i < arquivos.size(); i++){

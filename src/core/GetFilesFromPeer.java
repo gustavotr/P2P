@@ -92,10 +92,10 @@ public class GetFilesFromPeer extends Thread {
             }
             socketUnicast.close();            
             System.out.println("Terminou UNICAST");
-            for (Arquivo arquivosDoTracker1 : arquivosDoTracker) {
-                System.out.print(arquivosDoTracker1.getNome());
-                System.out.println(arquivosDoTracker1.getProcessos().toString());
-            }
+//            for (Arquivo arquivosDoTracker1 : arquivosDoTracker) {
+//                System.out.print(arquivosDoTracker1.getNome());
+//                System.out.println(arquivosDoTracker1.getProcessos().toString());
+//            }
             this.interrupt();
         } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException ex) {
             Logger.getLogger(GetFilesFromPeer.class.getName()).log(Level.SEVERE, null, ex);

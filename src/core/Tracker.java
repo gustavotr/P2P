@@ -79,8 +79,8 @@ public class Tracker extends Thread{
                 if(data.equals(respostaEsperada)){
                     int id = Integer.parseInt(resposta.substring(5,7));                    
                     if(port != UDPPort){
-                        System.out.println("Tracker status: Receber arquivos");
-                        System.out.println("\tFrom: "+add+":"+port);
+//                        System.out.println("Tracker status: Receber arquivos");
+//                        System.out.println("\tFrom: "+add+":"+port);
                         GetFilesFromPeer uni = new GetFilesFromPeer(Funcoes.GET_ARQUIVOS, id, add, port, arquivosDoTracker, keyPair.getPrivate());
                     }
                 }else{
@@ -89,12 +89,12 @@ public class Tracker extends Thread{
                     if(data.equals(respostaEsperada)){
                         String busca = resposta.substring(16, resposta.lastIndexOf(')') );                     
                         if(port != UDPPort){
-                            System.out.println("Tracker status: Processar busca");
+                           //System.out.println("Tracker status: Processar busca");
                             SendFilesFromTracker uni = new SendFilesFromTracker(busca, add, port, arquivosDoTracker, keyPair.getPrivate());
                         }
                     }else{
                         respostaEsperada = "Request: arquivo("; 
-                        System.out.println("Tracker receberu requisicao de arquivo");
+                        //System.out.println("Tracker receberu requisicao de arquivo");
                         data = resposta.substring(0,respostaEsperada.length());
                         if(data.equals(respostaEsperada)){
                             String busca = resposta.substring(17, resposta.lastIndexOf(')') ); 

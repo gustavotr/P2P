@@ -61,7 +61,7 @@ public class MultiCastPeer extends Thread {
                     String resposta = new String(messgage);
                     String respostaEsperada = "Peer id:";
                     
-                    System.out.println("MULTiCAST DO PEER <- " + resposta);
+                    //System.out.println("MULTiCAST DO PEER <- " + resposta);
 //                  System.out.println( new String("\tFrom: " + pack.getAddress().getHostAddress() + ":" + pack.getPort()) );
                       
                     String data = resposta.substring(0,respostaEsperada.length());
@@ -82,6 +82,7 @@ public class MultiCastPeer extends Thread {
                     respostaEsperada = Funcoes.TRACKER_HELLO;
                     data = resposta.substring(0,respostaEsperada.length());
                     if(data.equals(respostaEsperada)){ //atualiza o tracker atual
+                        System.out.println("MULTiCAST DO PEER <- " + resposta);
                         String str = resposta.substring(30);
                         int id = Integer.parseInt(resposta.substring(21,23));
                         PublicKey keyRecebida = KeyFactory.getInstance("RSA", "BC").generatePublic(new X509EncodedKeySpec(key));
@@ -94,6 +95,7 @@ public class MultiCastPeer extends Thread {
                 } catch(SocketTimeoutException ex){
                     System.out.println("Tracker caiu!");                    
                     processo.knowTracker = false;
+                    processo.isReady = false;                    
                     processo.changePanel = true;
                 }catch (SocketException ex) {
                     Logger.getLogger(MultiCastPeer.class.getName()).log(Level.SEVERE, null, ex);
